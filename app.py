@@ -8,8 +8,7 @@ import pandas as pd
 from datetime import date
 
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app = dash.Dash(__name__)
 
 server = app.server
 
@@ -44,6 +43,8 @@ app.layout = html.Div([
             labelStyle={'display': 'inline-block'}
         )
     ], style={"columnCount": 3, 'textAlign': "center", "margin-top": "24px", "margin-bottom": "48px"}),
+
+    # Iconos y globales
     html.Div([
         html.Div([
             html.Img(src="https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png",
@@ -82,34 +83,40 @@ app.layout = html.Div([
         ]),
     ], style={"columnCount": 5, 'textAlign': "center"}),
 
-    html.Div([
-        html.Div([
-            html.H3('Total Visits by Month', style={"textAlign": "center"}),
-            dcc.Graph(
-                id='total-visit-line'
-            ),
-        ]),
-        html.Div([
-            html.H3('Total Visits by Social Networks', style={"textAlign": "center"}),
-            dcc.Graph(
-                id='total-visit-social-networks-line'
-            ),
-        ]),
-    ] , style={"columnCount": 2, 'textAlign': "center"}),
+    html.H3('Total Visits by Month', style={"textAlign": "center"}),
+    dcc.Graph(
+        id='total-visit-line'
+    ),
+    html.H3('Total Visits by Social Networks', style={"textAlign": "center"}),
+    dcc.Graph(
+        id='total-visit-social-networks-line'
+    ),
 
     
-   
+   html.Div([
+        html.H3('Total Visits by Country', style={"textAlign": "center"}),       
+        html.H3('Total Visits by Device', style={"textAlign": "center"}),
+        html.H3('Total Visits by Network', style={"textAlign": "center"}),
+    ], style={"columnCount": 3}),
+
     html.Div([
-        html.H3('Total Visits by Country', style={"textAlign": "center"}),
+        #html.H3('Total Visits by Country', style={"textAlign": "center"}),
         dcc.Graph(
             id='world-map'
         ),
-        html.H3('Total Visits by Device', style={"textAlign": "center"}),
+    
+        #html.H3('Total Visits by Device', style={"textAlign": "center"}),
         dcc.Graph(
-            id='diveces-pie'
+            id='devices-pie'
+        ),
+
+        dcc.Graph(
+            id='networks-pie'
         )
-    ], style={"columnCount": 2})
-])
+
+    ], style={"columnCount": 3})
+
+], className ="")
 
 
 @app.callback(
@@ -121,7 +128,8 @@ app.layout = html.Div([
     Output('total-visit-line', 'figure'),
     Output('total-visit-social-networks-line', 'figure'),
     Output('world-map', 'figure'),
-    Output('diveces-pie', 'figure'),
+    Output('devices-pie', 'figure'),
+    Output('networks-pie', 'figure'),
     Input('date-picker-range', 'start_date'),
     Input('date-picker-range', 'end_date'),
     Input('social-networks-dropdown', 'value'),
@@ -227,6 +235,18 @@ def update_figures(start_date_selected, end_date_selected, social_networks_selec
         .reset_index()
     )
 
+    df_networks = (
+        df
+        .loc[(df.social_network.isin(social_networks_selected)) &
+             (df.device.isin(devices_selected)) &
+             (df.datetime >= start_date_selected) &
+             (df.datetime <= end_date_selected)]
+        .groupby(['social_network'])
+        .count()
+        .name
+        .reset_index()
+    )
+
     total_visit_fig = px.line(
         df_by_month,
         x="year_month",
@@ -266,7 +286,16 @@ def update_figures(start_date_selected, end_date_selected, social_networks_selec
         }
     )
 
-    return total_visit, facebook_visit, instagram_visit, twitter_visit, twitch_visit, total_visit_fig, total_visit_social_network_fig, world_map_fig, devices_pie_fig
+    networks_pie_fig = px.pie(
+        df_networks,
+        values='name',
+        names='social_network',
+        labels={
+            'name': 'Total Visits'
+        }
+    )
+
+    return total_visit, facebook_visit, instagram_visit, twitter_visit, twitch_visit, total_visit_fig, total_visit_social_network_fig, world_map_fig, devices_pie_fig, networks_pie_fig
 
 
 if __name__ == '__main__':
