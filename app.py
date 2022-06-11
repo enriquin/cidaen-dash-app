@@ -299,4 +299,4 @@ def update_figures(start_date_selected, end_date_selected, social_networks_selec
 
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', port="8889")
+    app.run_server(host='0.0.0.0', port="80")
